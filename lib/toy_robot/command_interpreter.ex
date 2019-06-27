@@ -21,15 +21,19 @@ defmodule ToyRobot.CommandInterpreter do
     commands |> Enum.map(&do_interpret/1)
   end
 
-  defp do_interpret("PLACE " <> rest) do
-    [east, north, facing] = rest |> String.split(",")
-    to_int = &String.to_integer/1
+  defp do_interpret(("PLACE" <> _rest) = command) do
+    format = ~r/\APLACE (\d+),(\d+),(NORTH|EAST|SOUTH|WEST)\z/
+    case Regex.run(format, command) do
+      [_command, east, north, facing] ->
+        to_integer = &String.to_integer/1
 
-    {:place, %{
-      east: to_int.(east),
-      north: to_int.(north),
-      facing: facing |> String.downcase |> String.to_atom
-    }}
+        {:place, %{
+          east: to_integer.(east),
+          north: to_integer.(north),
+          facing: facing |> String.downcase |> String.to_atom
+        }}
+      nil -> {:invalid, command}
+    end
   end
 
   defp do_interpret("MOVE"), do: :move
