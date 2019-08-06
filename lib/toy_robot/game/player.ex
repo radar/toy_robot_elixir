@@ -24,7 +24,7 @@ defmodule ToyRobot.Game.Player do
         table: ToyRobot.Game.Table.table(table),
         robot: struct(Robot, position)
       }
-      Table.update_position(table, name, position)
+      Table.update(table, name, self)
 
       {:ok, simulation}
     end

@@ -2,7 +2,7 @@ defmodule ToyRobot.Game.Table do
   use GenServer
 
   alias ToyRobot.Table
-  alias ToyRobot.Game.PlayerSupervisor
+  alias ToyRobot.Game.{Player, PlayerSupervisor}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: __MODULE__)
@@ -18,11 +18,11 @@ defmodule ToyRobot.Game.Table do
   end
 
   def position_taken?(table, position) do
-    GenServer.call(table, {:position_taken?, position |> coordinates})
+    GenServer.call(table, {:position_taken?, position})
   end
 
-  def update_position(table, name, position) do
-    GenServer.call(table, {:update_position, name, position})
+  def update(table, name, pid) do
+    GenServer.call(table, {:update, name, pid})
   end
 
   def name(table) do
@@ -38,12 +38,12 @@ defmodule ToyRobot.Game.Table do
   end
 
   def handle_call({:position_taken?, position}, _from, %{players: players} = state) do
-    taken = position in (players |> positions)
+    taken = (position |> Map.take([:north, :east])) in (players |> positions)
     {:reply, taken, state}
   end
 
-  def handle_call({:update_position, name, position}, _from, %{players: players} = state) do
-    players = players |> Map.put(name, position)
+  def handle_call({:update, name, pid}, _from, %{players: players} = state) do
+    players = players |> Map.put(name, pid) |> IO.inspect
     {:reply, :ok, %{state | players: players}}
   end
 
@@ -60,7 +60,6 @@ defmodule ToyRobot.Game.Table do
         _from,
         %{
           table: %Table{north_boundary: north_boundary, east_boundary: east_boundary},
-          players: players
         } = state
       ) do
     pick_a_number = fn max -> 0..max |> Enum.random() end
@@ -68,6 +67,12 @@ defmodule ToyRobot.Game.Table do
     {:reply, %{north: pick_a_number.(north_boundary), east: pick_a_number.(east_boundary)}, state}
   end
 
-  defp coordinates(position), do: position |> Map.take([:north, :east])
-  defp positions(players), do: players |> Map.values() |> Enum.map(&coordinates/1)
+  defp coordinates(player), do: player |> Player.report |> Map.take([:north, :east])
+
+  defp positions(players) do
+    players
+    |> Map.values()
+    |> Enum.filter(&Process.alive?/1)
+    |> Enum.map(&coordinates/1)
+  end
 end

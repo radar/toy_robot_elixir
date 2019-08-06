@@ -26,8 +26,6 @@ defmodule ToyRobot.Game do
       {:error, :occupied}
     else
       %{robot: robot} = table |> process_name(name) |> Player.move()
-      player_name = table |> player_name(name)
-      Table.update_position(table, player_name, robot)
       robot
     end
   end
