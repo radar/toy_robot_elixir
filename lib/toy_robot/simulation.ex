@@ -155,4 +155,8 @@ defmodule ToyRobot.Simulation do
       %Robot{north: 0, east: 0, facing: :north}
   """
   def report(%Simulation{robot: robot}), do: robot
+
+  def next_move(%Simulation{robot: robot}) do
+    robot |> Robot.move()
+  end
 end
